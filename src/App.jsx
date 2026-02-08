@@ -17,6 +17,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTag, setActiveTag] = useState(null)
   const [mobileView, setMobileView] = useState('list')
+  const [collapsed, setCollapsed] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('smart-notes-v1', JSON.stringify(notes))
@@ -91,6 +92,8 @@ export default function App() {
         activeTag={activeTag}
         onTagFilter={setActiveTag}
         mobileView={mobileView}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(p => !p)}
       />
       <NoteEditor
         note={selectedNote}
