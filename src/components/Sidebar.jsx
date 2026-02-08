@@ -136,9 +136,12 @@ export default function Sidebar({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#e6e2db] text-center">
+          <div className="px-4 py-3 border-t border-[#e6e2db] flex items-center justify-between">
             <span className="text-[11px] text-[#c4c0b8] font-['Manrope']">
               {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+            </span>
+            <span className="text-[11px] text-[#d8d4cd] font-['Manrope']">
+              v{__APP_VERSION__}
             </span>
           </div>
         </>
