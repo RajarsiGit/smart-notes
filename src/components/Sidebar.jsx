@@ -1,5 +1,10 @@
+import { useState, useRef, useEffect } from 'react'
 import { Search, Plus, Tag, X, ChevronLeft, LogOut } from 'lucide-react'
 import NoteCard from './NoteCard'
+
+const MIN_WIDTH = 180
+const MAX_WIDTH = 480
+const DEFAULT_WIDTH = 288
 
 export default function Sidebar({
   notes,
@@ -17,11 +22,56 @@ export default function Sidebar({
   user,
   onLogout,
 }) {
+  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
+  const isDraggingRef = useRef(false)
+  const dragStart = useRef({ x: 0, width: 0 })
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const handler = e => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  useEffect(() => {
+    function onMouseMove(e) {
+      if (!isDraggingRef.current) return
+      const delta = e.clientX - dragStart.current.x
+      setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, dragStart.current.width + delta)))
+    }
+    function onMouseUp() {
+      if (!isDraggingRef.current) return
+      isDraggingRef.current = false
+      setIsDragging(false)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
+
+  function startDrag(e) {
+    e.preventDefault()
+    isDraggingRef.current = true
+    setIsDragging(true)
+    dragStart.current = { x: e.clientX, width }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
   return (
     <aside
-      className={`flex-col border-r border-[#e6e2db] bg-[#f3f0ea] shrink-0 transition-[width] duration-200 ease-in-out overflow-hidden
+      style={!collapsed && isDesktop ? { width } : undefined}
+      className={`relative flex-col border-r border-[#e6e2db] bg-[#f3f0ea] shrink-0 overflow-hidden
+        ${isDragging ? '' : 'transition-[width] duration-200 ease-in-out'}
         ${mobileView === 'editor' ? 'hidden md:flex' : 'flex w-full'}
-        ${collapsed ? 'md:w-12' : 'md:w-72'}
+        ${collapsed ? 'md:w-12' : ''}
       `}
     >
       {collapsed ? (
@@ -140,8 +190,8 @@ export default function Sidebar({
           {/* Footer */}
           <div className="px-4 py-3 border-t border-[#e6e2db]">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-[#c4c0b8] font-['Manrope'] truncate max-w-[140px]" title={user?.email}>
-                {user?.email}
+              <span className="text-[11px] text-[#c4c0b8] font-['Manrope'] truncate max-w-[140px]" title={user?.name}>
+                {user?.name}
               </span>
               <button
                 onClick={onLogout}
@@ -160,6 +210,14 @@ export default function Sidebar({
                 v{__APP_VERSION__}
               </span>
             </div>
+          </div>
+
+          {/* Drag handle — desktop only */}
+          <div
+            onMouseDown={startDrag}
+            className="hidden md:block absolute top-0 right-0 w-2 h-full cursor-col-resize z-10 group"
+          >
+            <div className="absolute right-0 top-0 w-px h-full bg-[#0d9488] opacity-0 group-hover:opacity-40 transition-opacity" />
           </div>
         </>
       )}
