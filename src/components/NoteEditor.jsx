@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Trash2, Plus, X, Clock, ChevronLeft } from 'lucide-react'
 import EmptyState from './EmptyState'
 
@@ -15,6 +15,14 @@ export default function NoteEditor({ note, onUpdate, onDelete, allTags, mobileVi
   const [tagInput, setTagInput] = useState('')
   const [showTagInput, setShowTagInput] = useState(false)
   const tagInputRef = useRef(null)
+  const titleRef = useRef(null)
+
+  useEffect(() => {
+    const el = titleRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = el.scrollHeight + 'px'
+  }, [note?.title])
 
   const handleTitleChange = useCallback(
     e => {
@@ -106,11 +114,13 @@ export default function NoteEditor({ note, onUpdate, onDelete, allTags, mobileVi
       <div key={note.id} className="flex-1 overflow-y-auto animate-fade-in">
         <div className="px-5 py-8 md:px-14 md:py-12 max-w-2xl mx-auto w-full">
           {/* Title */}
-          <input
+          <textarea
+            ref={titleRef}
             className="note-title-input text-[2.2rem] font-['Syne'] font-bold text-[#1a1917] placeholder-[#ddd9d3] leading-tight"
             value={note.title}
             onChange={handleTitleChange}
             placeholder="Untitled"
+            rows={1}
           />
 
           {/* Teal accent rule */}
