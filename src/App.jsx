@@ -1,27 +1,16 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import { AppProvider, useApp } from './context/AppContext'
 import Sidebar from './components/Sidebar'
 import NoteEditor from './components/NoteEditor'
+import AuthScreen from './components/AuthScreen'
 
-const generateId = () => Math.random().toString(36).slice(2, 11)
-
-export default function App() {
-  const [notes, setNotes] = useState(() => {
-    try {
-      const saved = localStorage.getItem('smart-notes-v1')
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
-  })
+function NotesApp() {
+  const { user, notes, loading, loadData, createNote, updateNote, deleteNote, logout } = useApp()
   const [selectedId, setSelectedId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTag, setActiveTag] = useState(null)
   const [mobileView, setMobileView] = useState('list')
   const [collapsed, setCollapsed] = useState(false)
-
-  useEffect(() => {
-    localStorage.setItem('smart-notes-v1', JSON.stringify(notes))
-  }, [notes])
 
   const filteredNotes = notes.filter(note => {
     const matchesSearch =
@@ -39,43 +28,37 @@ export default function App() {
     setMobileView('editor')
   }, [])
 
-  const createNote = useCallback(() => {
-    const newNote = {
-      id: generateId(),
-      title: 'Untitled',
-      content: '',
-      tags: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    setNotes(prev => [newNote, ...prev])
-    setSelectedId(newNote.id)
+  const handleNew = useCallback(async () => {
+    const note = await createNote()
+    setSelectedId(note.id)
     setMobileView('editor')
     setSearchQuery('')
     setActiveTag(null)
-  }, [])
+  }, [createNote])
 
-  const updateNote = useCallback((id, updates) => {
-    setNotes(prev =>
-      prev.map(n =>
-        n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n
-      )
-    )
-  }, [])
-
-  const deleteNote = useCallback(
+  const handleDelete = useCallback(
     id => {
-      setNotes(prev => {
-        const next = prev.filter(n => n.id !== id)
-        if (selectedId === id) {
-          setSelectedId(next[0]?.id || null)
-          setMobileView('list')
-        }
-        return next
-      })
+      deleteNote(id)
+      if (selectedId === id) {
+        const remaining = notes.filter(n => n.id !== id)
+        setSelectedId(remaining[0]?.id || null)
+        setMobileView('list')
+      }
     },
-    [selectedId]
+    [deleteNote, selectedId, notes]
   )
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f3f0ea]">
+        <div className="w-6 h-6 border-2 border-[#0d9488] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <AuthScreen onAuthSuccess={loadData} />
+  }
 
   const selectedNote = notes.find(n => n.id === selectedId) || null
 
@@ -85,7 +68,7 @@ export default function App() {
         notes={filteredNotes}
         selectedId={selectedId}
         onSelect={handleSelect}
-        onNew={createNote}
+        onNew={handleNew}
         searchQuery={searchQuery}
         onSearch={setSearchQuery}
         allTags={allTags}
@@ -94,15 +77,25 @@ export default function App() {
         mobileView={mobileView}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(p => !p)}
+        user={user}
+        onLogout={logout}
       />
       <NoteEditor
         note={selectedNote}
         onUpdate={updateNote}
-        onDelete={deleteNote}
+        onDelete={handleDelete}
         allTags={allTags}
         mobileView={mobileView}
         onBack={() => setMobileView('list')}
       />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <NotesApp />
+    </AppProvider>
   )
 }

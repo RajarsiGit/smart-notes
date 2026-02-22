@@ -1,4 +1,4 @@
-import { Search, Plus, Tag, X, ChevronLeft } from 'lucide-react'
+import { Search, Plus, Tag, X, ChevronLeft, LogOut } from 'lucide-react'
 import NoteCard from './NoteCard'
 
 export default function Sidebar({
@@ -14,6 +14,8 @@ export default function Sidebar({
   mobileView,
   collapsed,
   onToggleCollapse,
+  user,
+  onLogout,
 }) {
   return (
     <aside
@@ -136,13 +138,28 @@ export default function Sidebar({
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#e6e2db] flex items-center justify-between">
-            <span className="text-[11px] text-[#c4c0b8] font-['Manrope']">
-              {notes.length} {notes.length === 1 ? 'note' : 'notes'}
-            </span>
-            <span className="text-[11px] text-[#d8d4cd] font-['Manrope']">
-              v{__APP_VERSION__}
-            </span>
+          <div className="px-4 py-3 border-t border-[#e6e2db]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-[#c4c0b8] font-['Manrope'] truncate max-w-[140px]" title={user?.email}>
+                {user?.email}
+              </span>
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-1 text-[11px] text-[#b0aca6] hover:text-red-500 transition-colors font-['Manrope']"
+                title="Sign out"
+              >
+                <LogOut size={11} />
+                Sign out
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#d8d4cd] font-['Manrope']">
+                {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+              </span>
+              <span className="text-[11px] text-[#d8d4cd] font-['Manrope']">
+                v{__APP_VERSION__}
+              </span>
+            </div>
           </div>
         </>
       )}
